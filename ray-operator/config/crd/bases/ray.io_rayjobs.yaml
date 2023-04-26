@@ -372,6 +372,16 @@ spec:
                           there can only be one head pod per Ray cluster.
                         format: int32
                         type: integer
+                      serviceReconciliationConfig:
+                        description: ReconciliationConfig config for reconciliation
+                        properties:
+                          enableReconciliation:
+                            description: EnableServiceReconciliation to enable disable
+                              service reconciliation
+                            type: boolean
+                          reconciliationThresholdInSeconds:
+                            type: number
+                        type: object
                       serviceType:
                         description: ServiceType is Kubernetes service type of the
                           head service.

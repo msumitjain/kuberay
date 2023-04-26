@@ -748,6 +748,7 @@ func (r *RayServiceReconciler) reconcileServices(ctx context.Context, rayService
 		}
 		seconds := serviceReconciliationConfig.ReconciliationThresholdInSeconds
 		if time.Since(LastServiceReconciliation).Seconds() < *seconds {
+			//if time.Since(LastServiceReconciliation).Seconds() < 2 {
 			// Threshold is not crossed yet, we should skip this reconciliation step
 			r.Log.Info("ServiceReconciliation threshold is higher than the reconciliation frequency. " +
 				"This attempt of reconciliation will be ignored")
