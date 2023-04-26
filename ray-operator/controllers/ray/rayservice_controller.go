@@ -36,6 +36,7 @@ import (
 
 // This variable is mutable for unit testing purpose.
 var ServiceUnhealthySecondThreshold = 60.0 // Serve deployment related health check.
+var LastServiceReconciliation = time.Now()
 
 const (
 	ServiceDefaultRequeueDuration      = 2 * time.Second
@@ -734,6 +735,27 @@ func (r *RayServiceReconciler) reconcileIngress(ctx context.Context, rayServiceI
 }
 
 func (r *RayServiceReconciler) reconcileServices(ctx context.Context, rayServiceInstance *rayv1alpha1.RayService, rayClusterInstance *rayv1alpha1.RayCluster, serviceType common.ServiceType) error {
+	headGroupSpec := rayClusterInstance.Spec.HeadGroupSpec
+	if headGroupSpec.ServiceReconciliationConfig != nil {
+		// service reconciliation config is present
+		serviceReconciliationConfig := headGroupSpec.ServiceReconciliationConfig
+
+		// checking if user has disabled the service reconciliation
+		if serviceReconciliationConfig.EnableReconciliation == nil || !*serviceReconciliationConfig.EnableReconciliation {
+			r.Log.Info("ServiceReconciliation is disabled. " +
+				"You can enable ServiceReconciliation by setting enableServiceReconciliation to true in HeadGroupSpec.")
+			return nil
+		}
+		seconds := serviceReconciliationConfig.ReconciliationThresholdInSeconds
+		if time.Since(LastServiceReconciliation).Seconds() < *seconds {
+			// Threshold is not crossed yet, we should skip this reconciliation step
+			r.Log.Info("ServiceReconciliation threshold is higher than the reconciliation frequency. " +
+				"This attempt of reconciliation will be ignored")
+			return nil
+		}
+		LastServiceReconciliation = time.Now()
+	}
+
 	// Creat Service Struct.
 	var raySvc *corev1.Service
 	var err error
@@ -756,6 +778,7 @@ func (r *RayServiceReconciler) reconcileServices(ctx context.Context, rayService
 		// Update Service
 		rayService.Spec = raySvc.Spec
 		r.Log.V(1).Info("reconcileServices update service")
+		r.Log.V(1).Info("Spec", "rayService.Spec", rayService.Spec, "raySvc.Spec", raySvc.Spec)
 		if updateErr := r.Update(ctx, rayService); updateErr != nil {
 			r.Log.Error(updateErr, "raySvc Update error!", "raySvc.Error", updateErr)
 			return updateErr

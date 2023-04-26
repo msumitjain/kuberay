@@ -31,6 +31,8 @@ type HeadGroupSpec struct {
 	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
 	// EnableIngress indicates whether operator should create ingress object for head service or not.
 	EnableIngress *bool `json:"enableIngress,omitempty"`
+	// ReconciliationConfig config for reconciliation
+	ServiceReconciliationConfig *ReconciliationConfig `json:"serviceReconciliationConfig,omitempty"`
 	// HeadGroupSpec.Replicas is deprecated and ignored; there can only be one head pod per Ray cluster.
 	Replicas *int32 `json:"replicas,omitempty"`
 	// RayStartParams are the params of the start command: node-manager-port, object-store-memory, ...
@@ -149,15 +151,15 @@ const (
 )
 
 // RayCluster is the Schema for the RayClusters API
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="desired workers",type=integer,JSONPath=".status.desiredWorkerReplicas",priority=0
-//+kubebuilder:printcolumn:name="available workers",type=integer,JSONPath=".status.availableWorkerReplicas",priority=0
-//+kubebuilder:printcolumn:name="status",type="string",JSONPath=".status.state",priority=0
-//+kubebuilder:printcolumn:name="age",type="date",JSONPath=".metadata.creationTimestamp",priority=0
-//+kubebuilder:printcolumn:name="head pod IP",type="string",JSONPath=".status.head.podIP",priority=1
-//+kubebuilder:printcolumn:name="head service IP",type="string",JSONPath=".status.head.serviceIP",priority=1
-//+genclient
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="desired workers",type=integer,JSONPath=".status.desiredWorkerReplicas",priority=0
+// +kubebuilder:printcolumn:name="available workers",type=integer,JSONPath=".status.availableWorkerReplicas",priority=0
+// +kubebuilder:printcolumn:name="status",type="string",JSONPath=".status.state",priority=0
+// +kubebuilder:printcolumn:name="age",type="date",JSONPath=".metadata.creationTimestamp",priority=0
+// +kubebuilder:printcolumn:name="head pod IP",type="string",JSONPath=".status.head.podIP",priority=1
+// +kubebuilder:printcolumn:name="head service IP",type="string",JSONPath=".status.head.serviceIP",priority=1
+// +genclient
 type RayCluster struct {
 	// Standard object metadata.
 	metav1.TypeMeta   `json:",inline"`
@@ -187,3 +189,10 @@ const (
 	RayConfigError         EventReason = "RayConfigError"
 	PodReconciliationError EventReason = "PodReconciliationError"
 )
+
+// ReconciliationConfig contains reconciliation config
+type ReconciliationConfig struct {
+	// EnableServiceReconciliation to enable disable service reconciliation
+	EnableReconciliation             *bool    `json:"enableReconciliation,omitempty"`
+	ReconciliationThresholdInSeconds *float64 `json:"reconciliationThresholdInSeconds,omitempty"`
+}
